@@ -9,7 +9,7 @@
   <meta name="description" content="ClawTVOS — bringing AI agent intelligence to smart TV operating systems." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Saira+Extra+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Saira+Extra+Condensed:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     /* ── Reset & Variables ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -130,18 +130,23 @@
 
     /* ── Tagline ── */
     .tagline {
-      font-size: clamp(0.85rem, 2vw, 1.05rem);
-      font-weight: 400;
+      font-family: "Space Grotesk", var(--font-ui);
+      font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+      font-weight: 300;
       color: var(--muted);
-      max-width: 28rem;
-      line-height: 1.55;
-      letter-spacing: 0.01em;
+      max-width: 32rem;
+      line-height: 1.7;
+      letter-spacing: 0.025em;
       margin-bottom: 2.5rem;
       animation: fadeInUp 0.8s ease-out 0.3s both;
     }
     .tagline strong {
       color: var(--fg);
       font-weight: 500;
+      background: linear-gradient(135deg, var(--claw), var(--tv));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     /* ── Terminal Block ── */
@@ -340,36 +345,43 @@
     // ── Dynamic year ──
     document.getElementById('y').textContent = new Date().getFullYear();
 
-    // ── Particle Canvas Background ──
+    // ── Particle Canvas Background with Mouse Tracking ──
     (function () {
       const canvas = document.getElementById('bg-canvas');
       const ctx = canvas.getContext('2d');
-      let w, h, particles, mouse;
+      let w, h, particles;
+
+      const mouse = { x: 0, y: 0, tx: 0, ty: 0, active: false };
+      const GLOW_RADIUS = 220;
+      const ATTRACT_RADIUS = 200;
 
       function resize() {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
       }
 
-      mouse = { x: w / 2, y: h / 2 };
       window.addEventListener('mousemove', function (e) {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
+        mouse.tx = e.clientX;
+        mouse.ty = e.clientY;
+        if (!mouse.active) mouse.active = true;
       });
 
       function createParticles() {
-        const count = Math.min(Math.floor((w * h) / 12000), 120);
+        const count = Math.min(Math.floor((w * h) / 10000), 140);
         particles = [];
         for (let i = 0; i < count; i++) {
+          const isAccent = Math.random() > 0.55;
           particles.push({
             x: Math.random() * w,
             y: Math.random() * h,
-            vx: (Math.random() - 0.5) * 0.3,
-            vy: (Math.random() - 0.5) * 0.3,
-            r: Math.random() * 1.2 + 0.4,
-            color: Math.random() > 0.6
-              ? 'rgba(0,224,160,' + (Math.random() * 0.3 + 0.1).toFixed(2) + ')'
-              : 'rgba(255,255,255,' + (Math.random() * 0.12 + 0.03).toFixed(2) + ')'
+            vx: (Math.random() - 0.5) * 0.35,
+            vy: (Math.random() - 0.5) * 0.35,
+            ox: 0, oy: 0,
+            r: Math.random() * 1.4 + 0.4,
+            baseAlpha: isAccent
+              ? Math.random() * 0.35 + 0.15
+              : Math.random() * 0.12 + 0.04,
+            isAccent: isAccent
           });
         }
       }
@@ -377,47 +389,124 @@
       function draw() {
         ctx.clearRect(0, 0, w, h);
 
-        // Gradient orbs
-        const g1 = ctx.createRadialGradient(w * 0.3, h * 0.3, 0, w * 0.3, h * 0.3, w * 0.45);
-        g1.addColorStop(0, 'rgba(0,224,160,0.04)');
-        g1.addColorStop(1, 'transparent');
-        ctx.fillStyle = g1;
+        // Smooth mouse follow
+        mouse.x += (mouse.tx - mouse.x) * 0.08;
+        mouse.y += (mouse.ty - mouse.y) * 0.08;
+
+        // ── Mouse glow: multi-layer radial light ──
+        if (mouse.active) {
+          // Outer halo
+          const g0 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 1.8);
+          g0.addColorStop(0, 'rgba(0,224,160,0.06)');
+          g0.addColorStop(0.4, 'rgba(0,224,160,0.02)');
+          g0.addColorStop(1, 'transparent');
+          ctx.fillStyle = g0;
+          ctx.fillRect(0, 0, w, h);
+
+          // Core glow
+          const g1 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 0.6);
+          g1.addColorStop(0, 'rgba(0,224,160,0.12)');
+          g1.addColorStop(0.5, 'rgba(0,180,130,0.04)');
+          g1.addColorStop(1, 'transparent');
+          ctx.fillStyle = g1;
+          ctx.fillRect(0, 0, w, h);
+
+          // Secondary warm glow offset
+          const g2 = ctx.createRadialGradient(mouse.x + 40, mouse.y - 30, 0, mouse.x + 40, mouse.y - 30, GLOW_RADIUS);
+          g2.addColorStop(0, 'rgba(255,107,53,0.04)');
+          g2.addColorStop(1, 'transparent');
+          ctx.fillStyle = g2;
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        // ── Ambient gradient orbs ──
+        const a1 = ctx.createRadialGradient(w * 0.25, h * 0.35, 0, w * 0.25, h * 0.35, w * 0.4);
+        a1.addColorStop(0, 'rgba(0,224,160,0.03)');
+        a1.addColorStop(1, 'transparent');
+        ctx.fillStyle = a1;
         ctx.fillRect(0, 0, w, h);
 
-        const g2 = ctx.createRadialGradient(w * 0.75, h * 0.6, 0, w * 0.75, h * 0.6, w * 0.35);
-        g2.addColorStop(0, 'rgba(255,107,53,0.03)');
-        g2.addColorStop(1, 'transparent');
-        ctx.fillStyle = g2;
+        const a2 = ctx.createRadialGradient(w * 0.75, h * 0.65, 0, w * 0.75, h * 0.65, w * 0.3);
+        a2.addColorStop(0, 'rgba(255,107,53,0.025)');
+        a2.addColorStop(1, 'transparent');
+        ctx.fillStyle = a2;
         ctx.fillRect(0, 0, w, h);
 
-        // Particles
+        // ── Particles with mouse interaction ──
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
+
+          // Mouse attraction / repulsion
+          if (mouse.active) {
+            const dx = mouse.x - p.x;
+            const dy = mouse.y - p.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < ATTRACT_RADIUS && dist > 1) {
+              const force = (1 - dist / ATTRACT_RADIUS) * 0.015;
+              p.vx += dx / dist * force;
+              p.vy += dy / dist * force;
+            }
+          }
+
+          // Damping
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+
           p.x += p.vx;
           p.y += p.vy;
 
-          if (p.x < 0) p.x = w;
-          if (p.x > w) p.x = 0;
-          if (p.y < 0) p.y = h;
-          if (p.y > h) p.y = 0;
+          // Wrap
+          if (p.x < -10) p.x = w + 10;
+          if (p.x > w + 10) p.x = -10;
+          if (p.y < -10) p.y = h + 10;
+          if (p.y > h + 10) p.y = -10;
+
+          // Proximity to mouse → boost alpha & size
+          let alpha = p.baseAlpha;
+          let drawR = p.r;
+          if (mouse.active) {
+            const mdx = mouse.x - p.x;
+            const mdy = mouse.y - p.y;
+            const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+            if (mDist < GLOW_RADIUS) {
+              const prox = 1 - mDist / GLOW_RADIUS;
+              alpha = Math.min(p.baseAlpha + prox * 0.55, 0.9);
+              drawR = p.r + prox * 1.5;
+            }
+          }
 
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
+          ctx.arc(p.x, p.y, drawR, 0, Math.PI * 2);
+          if (p.isAccent) {
+            ctx.fillStyle = 'rgba(0,224,160,' + alpha.toFixed(3) + ')';
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+          }
           ctx.fill();
 
           // Connect nearby particles
           for (let j = i + 1; j < particles.length; j++) {
             const q = particles[j];
-            const dx = p.x - q.x;
-            const dy = p.y - q.y;
-            const dist = dx * dx + dy * dy;
-            if (dist < 18000) {
+            const ddx = p.x - q.x;
+            const ddy = p.y - q.y;
+            const dd = ddx * ddx + ddy * ddy;
+            const maxLine = 20000;
+            if (dd < maxLine) {
+              const lineAlpha = (1 - dd / maxLine) * 0.14;
+              // Lines near mouse glow brighter
+              let boost = 1;
+              if (mouse.active) {
+                const mx = (p.x + q.x) / 2;
+                const my = (p.y + q.y) / 2;
+                const mld = Math.sqrt((mouse.x - mx) ** 2 + (mouse.y - my) ** 2);
+                if (mld < GLOW_RADIUS) {
+                  boost = 1 + (1 - mld / GLOW_RADIUS) * 2.5;
+                }
+              }
               ctx.beginPath();
               ctx.moveTo(p.x, p.y);
               ctx.lineTo(q.x, q.y);
-              const alpha = (1 - dist / 18000) * 0.12;
-              ctx.strokeStyle = 'rgba(0,224,160,' + alpha.toFixed(3) + ')';
+              ctx.strokeStyle = 'rgba(0,224,160,' + Math.min(lineAlpha * boost, 0.35).toFixed(3) + ')';
               ctx.lineWidth = 0.5;
               ctx.stroke();
             }
