@@ -352,8 +352,8 @@
       let w, h, particles;
 
       const mouse = { x: 0, y: 0, tx: 0, ty: 0, active: false };
-      const GLOW_RADIUS = 220;
-      const ATTRACT_RADIUS = 200;
+      const GLOW_RADIUS = 130;
+      const ATTRACT_RADIUS = 120;
 
       function resize() {
         w = canvas.width = window.innerWidth;
@@ -389,30 +389,30 @@
       function draw() {
         ctx.clearRect(0, 0, w, h);
 
-        // Smooth mouse follow
-        mouse.x += (mouse.tx - mouse.x) * 0.08;
-        mouse.y += (mouse.ty - mouse.y) * 0.08;
+        // Fast mouse follow
+        mouse.x += (mouse.tx - mouse.x) * 0.35;
+        mouse.y += (mouse.ty - mouse.y) * 0.35;
 
         // ── Mouse glow: multi-layer radial light ──
         if (mouse.active) {
           // Outer halo
-          const g0 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 1.8);
-          g0.addColorStop(0, 'rgba(0,224,160,0.06)');
-          g0.addColorStop(0.4, 'rgba(0,224,160,0.02)');
+          const g0 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 1.4);
+          g0.addColorStop(0, 'rgba(0,224,160,0.07)');
+          g0.addColorStop(0.35, 'rgba(0,224,160,0.025)');
           g0.addColorStop(1, 'transparent');
           ctx.fillStyle = g0;
           ctx.fillRect(0, 0, w, h);
 
           // Core glow
-          const g1 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 0.6);
-          g1.addColorStop(0, 'rgba(0,224,160,0.12)');
+          const g1 = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, GLOW_RADIUS * 0.45);
+          g1.addColorStop(0, 'rgba(0,224,160,0.14)');
           g1.addColorStop(0.5, 'rgba(0,180,130,0.04)');
           g1.addColorStop(1, 'transparent');
           ctx.fillStyle = g1;
           ctx.fillRect(0, 0, w, h);
 
           // Secondary warm glow offset
-          const g2 = ctx.createRadialGradient(mouse.x + 40, mouse.y - 30, 0, mouse.x + 40, mouse.y - 30, GLOW_RADIUS);
+          const g2 = ctx.createRadialGradient(mouse.x + 25, mouse.y - 18, 0, mouse.x + 25, mouse.y - 18, GLOW_RADIUS * 0.7);
           g2.addColorStop(0, 'rgba(255,107,53,0.04)');
           g2.addColorStop(1, 'transparent');
           ctx.fillStyle = g2;
